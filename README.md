@@ -186,11 +186,7 @@ git push origin main
 
 ## 📄 Licença
 
-MIT - Veja LICENSE para detalhes
-
-## 👥 Contribuidores
-
-- FF Executive Team
+MIT - 
 
 ---
 
