@@ -2,6 +2,15 @@
  * ChartBuilder - Constrói e gerencia o gráfico de Gantt
  * Responsabilidade: Lógica de visualização e renderização do gráfico
  */
+
+const formatDateBR = (value) => {
+  const d = new Date(value);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
 class ChartBuilder {
   constructor(containerId = 'chart-container') {
     this.containerId = containerId;
@@ -116,7 +125,7 @@ class ChartBuilder {
         textposition: 'none',
 
         // customdata: [fase, inicio, fim, projetoCompleto]
-        customdata: items.map((_, i) => [phase, baseDates[i], endDates[i], projectFull[i]]),
+        customdata: items.map((_, i) => [phase, formatDateBR(baseDates[i]), formatDateBR(endDates[i]), projectFull[i]]),
 
         // hover com datas reais (não a duração)
         hovertemplate:
