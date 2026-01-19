@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cronograma do Projeto FF Executive - Visualização interativa com Gantt">
+    <meta name="author" content="FF Executive Team">
+    
+    <title>Cronograma do Projeto FF Executive</title>
+    
+    <!-- CSS Modular -->
+    <link rel="stylesheet" href="src/css/styles.css">
+    
+    <!-- Plotly.js para gráficos -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="">
+            <h1>📊 Cronograma do Projeto FF Executive</h1>
+            <p>Visualização interativa do cronograma e progresso do projeto</p>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <div class="chart-wrapper">
+        
+        <!-- Mensagens de Erro -->
+        <div id="error-container"></div>
+        
+        <!-- Gráfico -->
+        <div id="chart-container"></div>
+        
+        <!-- Estatísticas -->
+        <div id="stats"></div>
+
+        <!-- Controles -->
+        <div id="controls"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Fundação Florestal. Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- Scripts dos Módulos (em ordem de dependência) -->
+    <script src="src/js/DataNormalizer.js"></script>
+    <script src="src/js/DataLoader.js"></script>
+    <script src="src/js/ChartBuilder.js"></script>
+    <script src="src/js/UIManager.js"></script>
+    <script src="src/js/App.js"></script>
+    
+    <!-- Script de Inicialização -->
+    <script>
+        // Espera o DOM estar pronto
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Cria e inicializa a aplicação com CSV JSON normalizado
+            const app = new App({
+                chartContainer: 'chart-container',
+                notionConfig: {
+                  csvJsonPath: 'src/data/csvjson.json'
+                }
+            });
+
+            // Inicializa
+            const success = await app.init();
+            
+            if (success) {
+                console.log('Aplicação inicializada com sucesso!');
+                console.log('Estado:', app.getState());
+            } else {
+                console.error('Falha ao inicializar aplicação');
+            }
+
+            // Listeners de eventos customizados
+            document.addEventListener('app:initialized', (e) => {
+                console.log('Evento: Aplicação inicializada', e.detail);
+            });
+
+            document.addEventListener('app:reloaded', (e) => {
+                console.log('Evento: Dados recarregados', e.detail);
+            });
+
+            // Expõe a aplicação globalmente para debug
+            window.app = app;
+        });
+    </script>
+</body>
+</html>
