@@ -66,22 +66,6 @@
             // Inicializa
             const success = await app.init();
             
-            if (success) {
-                console.log('Aplicação inicializada com sucesso!');
-                console.log('Estado:', app.getState());
-            } else {
-                console.error('Falha ao inicializar aplicação');
-            }
-
-            // Listeners de eventos customizados
-            document.addEventListener('app:initialized', (e) => {
-                console.log('Evento: Aplicação inicializada', e.detail);
-            });
-
-            document.addEventListener('app:reloaded', (e) => {
-                console.log('Evento: Dados recarregados', e.detail);
-            });
-
             // Expõe a aplicação globalmente para debug
             window.app = app;
         });

@@ -22,7 +22,6 @@ class App {
    */
   async init() {
     try {
-      console.log('Inicializando aplicação...');
 
       // Inicializa componentes
       this.dataLoader = new DataLoader(this.config.dataPath, this.config.notionConfig);
@@ -33,18 +32,14 @@ class App {
 
       // Carrega dados
       await this.dataLoader.load();
-      console.log('Dados carregados com sucesso');
 
       // Constrói gráfico
       const transformedData = this.dataLoader.transformForPlotly();
-      console.log('Dados transformados:', transformedData);
       this.chartBuilder.buildGanttChart(transformedData);
-      console.log('Gráfico criado com sucesso');
 
       // Inicializa UI
       this.uiManager.init(this.chartBuilder, this.dataLoader);
       this.uiManager.updateStats();
-      console.log('Interface inicializada');
 
       this.isInitialized = true;
       this._dispatchEvent('initialized');
@@ -62,7 +57,6 @@ class App {
    */
   async reload() {
     try {
-      console.log('Recarregando dados...');
       await this.dataLoader.load();
       const transformedData = this.dataLoader.transformForPlotly();
       this.chartBuilder.updateChart(transformedData);

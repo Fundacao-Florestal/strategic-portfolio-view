@@ -89,7 +89,6 @@ class DataLoader {
       
       // Transformar dados do Notion para o formato esperado
       this.data = this._transformNotionData(result.results);
-      console.log('Dados carregados do Notion:', this.data);
       return this.data;
     } catch (error) {
       console.error('Erro ao carregar dados do Notion:', error);
@@ -114,7 +113,6 @@ class DataLoader {
       }
       
       this.data = DataNormalizer.normalize(csvData);
-      console.log('Dados carregados e normalizados do CSV JSON:', this.data);
       return this.data;
     } catch (error) {
       console.error('Erro ao carregar dados do CSV JSON:', error);
