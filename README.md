@@ -17,8 +17,8 @@ Uma aplicação moderna e modular para visualização e gerenciamento de cronogr
 
 ### 1. Clonar o Repositório
 ```bash
-git clone https://github.com/seu-usuario/ff-executive-project.git
-cd ff-executive-project
+git clone https://github.com/seu-usuario/strategic-portfolio-view.git
+cd strategic-portfolio-view
 ```
 
 ### 2. Abrir no Navegador
@@ -58,7 +58,7 @@ Edite `src/data/cronograma.json` com suas tarefas:
 ## 📁 Estrutura do Projeto
 
 ```
-ff-executive-project/
+strategic-portfolio-view/
 ├── index.html                 # Página principal
 ├── README.md                  # Este arquivo
 ├── src/
@@ -183,8 +183,8 @@ git push origin main
 
 ## 📞 Suporte
 
-- Abra uma [Issue](https://github.com/seu-usuario/ff-executive-project/issues)
-- Envie um [Pull Request](https://github.com/seu-usuario/ff-executive-project/pulls)
+- Abra uma [Issue](https://github.com/seu-usuario/strategic-portfolio-view/issues)
+- Envie um [Pull Request](https://github.com/seu-usuario/strategic-portfolio-view/pulls)
 
 ## 📄 Licença
 

@@ -4,7 +4,7 @@
 
 ### 1️⃣ Servidor Local
 ```bash
-cd ff-executive-project
+cd strategic-portfolio-view
 python -m http.server 8000
 ```
 Acesse: `http://localhost:8000`

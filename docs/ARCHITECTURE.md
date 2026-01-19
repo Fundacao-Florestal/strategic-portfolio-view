@@ -7,7 +7,7 @@ Este projeto segue as **melhores práticas de arquitetura** com separação de r
 ## 🏗️ Estrutura de Diretórios
 
 ```
-ff-executive-project/
+strategic-portfolio-view/
 ├── index.html                 # Ponto de entrada principal
 ├── README.md                  # Documentação geral
 ├── src/
