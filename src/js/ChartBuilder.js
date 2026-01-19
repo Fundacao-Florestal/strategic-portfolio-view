@@ -17,6 +17,9 @@ class ChartBuilder {
       Plotly.newPlot(this.containerId, trace, layout, config);
       this.chart = document.getElementById(this.containerId);
 
+      // Garante que em mobile o container permita scroll horizontal sem “espremer” o gráfico
+      this._applyMobileContainerStyles();
+
       return this.chart;
     } catch (error) {
       console.error('Erro ao criar gráfico:', error);
@@ -24,7 +27,30 @@ class ChartBuilder {
     }
   }
 
+  _isMobile() {
+    return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  _applyMobileContainerStyles() {
+    const el = document.getElementById(this.containerId);
+    if (!el) return;
+
+    // Sempre permitir scroll horizontal (não atrapalha desktop e salva mobile)
+    el.style.overflowX = 'auto';
+    el.style.webkitOverflowScrolling = 'touch';
+
+    // Em mobile, um min-width ajuda a não esmagar o eixo/labels.
+    // Ajuste conforme o tamanho típico do seu cronograma.
+    if (this._isMobile()) {
+      el.style.minWidth = '980px';
+    } else {
+      el.style.minWidth = '';
+    }
+  }
+
   _createTrace(data) {
+    const isMobile = this._isMobile();
+
     const phaseColors = {
       'Planejamento': '#29b6f6',
       'Execução': '#ffd200',
@@ -48,30 +74,39 @@ class ChartBuilder {
 
     const traces = [];
 
+    const truncate = (s, max = 28) => {
+      const str = String(s ?? '');
+      if (str.length <= max) return str;
+      return str.slice(0, Math.max(0, max - 1)) + '…';
+    };
+
     sortedPhases.forEach(phase => {
       const items = phaseMap.get(phase);
 
+      // Duração em ms (Plotly usa isso para barras com base)
       const durations = items.map(item => {
         const start = new Date(item.Start).getTime();
         const end = new Date(item.End).getTime();
         return end - start;
       });
 
-      const baseDates = items.map(item =>
-        new Date(item.Start).toISOString()
-      );
+      const baseDates = items.map(item => new Date(item.Start).toISOString());
 
-      const projects = items.map(item => item.Project || 'Projeto');
+      // Para corrigir hover: fim real + nome completo do projeto
+      const endDates = items.map(item => new Date(item.End).toISOString());
+
+      const projectFull = items.map(item => item.Project || 'Projeto');
+      const projectAxis = isMobile ? projectFull.map(p => truncate(p, 28)) : projectFull;
 
       traces.push({
         x: durations,
-        y: projects,
+        y: projectAxis,
         base: baseDates,
         name: phase,
         type: 'bar',
         orientation: 'h',
         legendgroup: phase,
-        showlegend: true,
+        showlegend: !isMobile, // em mobile, legenda tende a ocupar espaço e atrapalhar
         marker: {
           color: phaseColors[phase] || '#999999',
           line: { width: 0 },
@@ -79,7 +114,16 @@ class ChartBuilder {
         },
         text: items.map(() => phase),
         textposition: 'none',
-        hovertemplate: `%{y}<br>Fase: %{text}<br>Inicio: %{base}<br>Fim: %{x}<extra></extra>`
+
+        // customdata: [fase, inicio, fim, projetoCompleto]
+        customdata: items.map((_, i) => [phase, baseDates[i], endDates[i], projectFull[i]]),
+
+        // hover com datas reais (não a duração)
+        hovertemplate:
+          `%{customdata[3]}<br>` +
+          `Fase: %{customdata[0]}<br>` +
+          `Inicio: %{customdata[1]}<br>` +
+          `Fim: %{customdata[2]}<extra></extra>`
       });
     });
 
@@ -87,13 +131,22 @@ class ChartBuilder {
   }
 
   _createLayout(data = []) {
+    const isMobile = this._isMobile();
+
     const today = new Date();
     const startRange = new Date(today.getTime() - 45 * 86400000).toISOString();
     const endRange = new Date(today.getTime() + 45 * 86400000).toISOString();
 
+    // Altura dinâmica por número de projetos/linhas (ajuda muito no mobile)
+    const projects = (data || []).map(d => d.Project || 'Projeto');
+    const uniqueProjectsCount = new Set(projects).size || 1;
+    const baseHeight = isMobile ? 380 : 520;
+    const perRow = isMobile ? 34 : 26;
+    const height = Math.max(baseHeight, uniqueProjectsCount * perRow + (isMobile ? 160 : 220));
+
     return {
       barmode: 'overlay',
-      bargap: 0.35,
+      bargap: isMobile ? 0.22 : 0.35,
       bargroupgap: 0.1,
       barcornerradius: 6,
 
@@ -102,9 +155,11 @@ class ChartBuilder {
       paper_bgcolor: '#FFFFFF',
       plot_bgcolor: '#FFFFFF',
 
+      height,
+
       font: {
         family: 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
-        size: 12,
+        size: isMobile ? 11 : 12,
         color: '#2F3437'
       },
 
@@ -117,7 +172,8 @@ class ChartBuilder {
         zeroline: false,
         showline: false,
         ticks: '',
-        title: { text: '' }
+        title: { text: '' },
+        tickfont: { size: isMobile ? 10 : 12 }
       },
 
       yaxis: {
@@ -127,11 +183,13 @@ class ChartBuilder {
         ticks: '',
         automargin: true,
         tickfont: {
-          size: 12,
+          size: isMobile ? 11 : 12,
           color: '#2F3437'
         }
       },
 
+      // Em mobile escondemos a legenda (showlegend false no trace).
+      // Em desktop mantém como estava.
       legend: {
         orientation: 'h',
         x: 0.01,
@@ -143,7 +201,9 @@ class ChartBuilder {
         font: { size: 11 }
       },
 
-      margin: { t: 120, b: 60 },
+      margin: isMobile
+        ? { t: 70, r: 20, b: 40, l: 120 }
+        : { t: 120, r: 30, b: 60, l: 160 },
 
       shapes: [
         {
@@ -165,10 +225,13 @@ class ChartBuilder {
   }
 
   _createConfig() {
+    const isMobile = this._isMobile();
+
     return {
       responsive: true,
-      displayModeBar: true,
+      displayModeBar: isMobile ? false : true,
       displaylogo: false,
+      scrollZoom: true,
       modeBarButtonsToRemove: ['lasso2d', 'select2d']
     };
   }
@@ -180,6 +243,9 @@ class ChartBuilder {
       this._createLayout(data),
       this._createConfig()
     );
+
+    // Reaplica estilo se houver resize/orientação
+    this._applyMobileContainerStyles();
   }
 
   exportAsImage(filename = 'cronograma.png') {
