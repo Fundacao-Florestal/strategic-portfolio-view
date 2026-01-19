@@ -1,4 +1,4 @@
-# Arquitetura do Projeto FF Executive
+# Arquitetura do Projeto
 
 ## 📋 Visão Geral
 
@@ -7,7 +7,7 @@ Este projeto segue as **melhores práticas de arquitetura** com separação de r
 ## 🏗️ Estrutura de Diretórios
 
 ```
-strategic-portfolio-view/
+ff-executive-project/
 ├── index.html                 # Ponto de entrada principal
 ├── README.md                  # Documentação geral
 ├── src/
@@ -162,7 +162,7 @@ Gráfico atualizado na tela
 ```json
 {
   "project": {
-    "name": "FF Executive Project",
+    "name": "Strategic Portfolio View",
     "description": "...",
     "startDate": "2024-01-01"
   },
@@ -322,4 +322,4 @@ assert(document.getElementById('test-container').innerHTML !== '');
 
 **Versão**: 1.0  
 **Última Atualização**: Janeiro 2025  
-**Autor**: FF Executive Team
+**Autor**: Fundacao-Florestal

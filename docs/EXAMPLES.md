@@ -1,4 +1,4 @@
-# 🔧 Exemplos de Extensão - FF Executive Project
+# 🔧 Exemplos de Extensão - Strategic Portfolio View
 
 Guia prático com exemplos de como estender a funcionalidade da aplicação.
 

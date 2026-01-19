@@ -1,10 +1,10 @@
-# 📋 Guia Rápido - FF Executive Project
+# 📋 Guia Rápido - Strategic Portfolio View
 
 ## ⚡ Setup em 2 Minutos
 
 ### 1️⃣ Servidor Local
 ```bash
-cd strategic-portfolio-view
+cd ff-executive-project
 python -m http.server 8000
 ```
 Acesse: `http://localhost:8000`

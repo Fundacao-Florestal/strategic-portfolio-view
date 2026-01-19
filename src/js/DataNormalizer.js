@@ -126,8 +126,8 @@ class DataNormalizer {
 
     return {
       project: {
-        name: 'FF Executive Project',
-        description: 'Cronograma do Projeto FF Executive',
+        name: 'Strategic Portfolio View',
+        description: 'Cronograma',
         startDate: new Date().toISOString().split('T')[0],
         projectCount: projects.size
       },

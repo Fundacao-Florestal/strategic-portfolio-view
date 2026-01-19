@@ -1,4 +1,4 @@
-# 📚 Índice de Documentação - FF Executive Project
+# 📚 Índice de Documentação - Strategic Portfolio View
 
 Bem-vindo! Aqui você encontra todos os documentos necessários para entender, usar e estender o projeto.
 
