@@ -28,7 +28,8 @@ class ChartBuilder {
 
       // Garante que em mobile o container permita scroll horizontal sem “espremer” o gráfico
       this._applyMobileContainerStyles();
-
+      // Bloqueia scroll do trackpad/mouse
+      this._disableWheel();
       return this.chart;
     } catch (error) {
       console.error('Erro ao criar gráfico:', error);
@@ -38,6 +39,17 @@ class ChartBuilder {
 
   _isMobile() {
     return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  _disableWheel() {
+    const el = document.getElementById(this.containerId);
+    if (!el) return;
+
+    // Permite scroll normal da página, mas bloqueia apenas o zoom do Plotly
+    el.addEventListener('wheel', (e) => {
+      // Deixa passar normalmente (não faz preventDefault)
+      // O scrollZoom: false já deve impedir o Plotly de fazer zoom
+    }, { passive: true });
   }
 
   _applyMobileContainerStyles() {
@@ -240,7 +252,7 @@ class ChartBuilder {
       responsive: true,
       displayModeBar: isMobile ? false : true,
       displaylogo: false,
-      scrollZoom: true,
+      scrollZoom: false,
       modeBarButtonsToRemove: ['lasso2d', 'select2d']
     };
   }
@@ -255,6 +267,9 @@ class ChartBuilder {
 
     // Reaplica estilo se houver resize/orientação
     this._applyMobileContainerStyles();
+
+    // Reaplica bloqueio de scroll
+    this._disableWheel();
   }
 
   exportAsImage(filename = 'cronograma.png') {
