@@ -7,6 +7,8 @@ class DataLoader {
     this.dataPath = dataPath;
     this.notionConfig = notionConfig; // { token, databaseId }
     this.data = null;
+    this.rawData = null; // Armazena dados brutos do CSV
+    console.log('DataLoader inicializado com config:', notionConfig);
   }
 
   /**
@@ -101,11 +103,17 @@ class DataLoader {
    */
   async loadFromCSVJSON(csvJsonPath) {
     try {
+      console.log('Carregando CSV JSON de:', csvJsonPath);
       const response = await fetch(csvJsonPath);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const csvData = await response.json();
+      
+      console.log('Dados CSV carregados:', csvData.length, 'registros');
+      
+      // Armazena dados brutos para filtros
+      this.rawData = csvData;
       
       // Usa DataNormalizer para normalizar os dados
       if (typeof DataNormalizer === 'undefined') {
@@ -113,6 +121,7 @@ class DataLoader {
       }
       
       this.data = DataNormalizer.normalize(csvData);
+      console.log('Dados normalizados:', this.data);
       return this.data;
     } catch (error) {
       console.error('Erro ao carregar dados do CSV JSON:', error);
@@ -224,8 +233,127 @@ class DataLoader {
       Status: task.status,
       Responsible: task.responsible,
       Project: task.project || 'Meu Projeto',
-      Phase: task.phase || task.name
+      Phase: task.phase || task.name,
+      Diretoria: task.diretoria || '',
+      'Assessoria | Núcleo | Programas': task.assessoriaOuNucleo || ''
     }));
+  }
+
+  /**
+   * Retorna lista única de diretorias sem repetição
+   * Trata valores separados por vírgula
+   */
+  getDiretorias() {
+    const data = this.rawData || this.data || [];
+    if (!Array.isArray(data)) return [];
+    
+    const diretorias = new Set();
+    data.forEach(item => {
+      if (item && item.Diretoria) {
+        // Divide por vírgula e adiciona cada valor limpo ao Set
+        const valores = item.Diretoria.split(',');
+        valores.forEach(v => {
+          const trimmed = v.trim();
+          if (trimmed) diretorias.add(trimmed);
+        });
+      }
+    });
+    
+    return Array.from(diretorias).sort();
+  }
+
+  /**
+   * Retorna lista única de Assessoria/Núcleo/Programas sem repetição
+   * Trata valores separados por vírgula
+   */
+  getAssessoriaOuNucleo() {
+    const data = this.rawData || this.data || [];
+    if (!Array.isArray(data)) return [];
+    
+    const assessorias = new Set();
+    data.forEach(item => {
+      if (item && item['Assessoria | Núcleo | Programas']) {
+        // Divide por vírgula e adiciona cada valor limpo ao Set
+        const valores = item['Assessoria | Núcleo | Programas'].split(',');
+        valores.forEach(v => {
+          const trimmed = v.trim();
+          if (trimmed) assessorias.add(trimmed);
+        });
+      }
+    });
+    
+    return Array.from(assessorias).sort();
+  }
+
+  /**
+   * Filtra dados por diretoria com busca parcial
+   * Verifica se algum dos valores separados por vírgula corresponde
+   */
+  filterByDiretoria(diretoria) {
+    const data = this.rawData || this.data || [];
+    if (!diretoria) return data;
+    
+    return data.filter(item => {
+      if (!item || !item.Diretoria) return false;
+      
+      // Divide por vírgula e verifica se algum valor contém o filtro
+      const valores = item.Diretoria.split(',');
+      return valores.some(v => 
+        v.trim().toLowerCase().includes(diretoria.toLowerCase())
+      );
+    });
+  }
+
+  /**
+   * Filtra dados por Assessoria/Núcleo/Programas com busca parcial
+   * Verifica se algum dos valores separados por vírgula corresponde
+   */
+  filterByAssessoriaOuNucleo(assessoria) {
+    const data = this.rawData || this.data || [];
+    if (!assessoria) return data;
+    
+    return data.filter(item => {
+      if (!item || !item['Assessoria | Núcleo | Programas']) return false;
+      
+      // Divide por vírgula e verifica se algum valor contém o filtro
+      const valores = item['Assessoria | Núcleo | Programas'].split(',');
+      return valores.some(v => 
+        v.trim().toLowerCase().includes(assessoria.toLowerCase())
+      );
+    });
+  }
+
+  /**
+   * Filtra por ambos os critérios com busca parcial
+   */
+  filterByDiretoriaAndAssessoria(diretoria, assessoria) {
+    const data = this.rawData || this.data || [];
+    let filtered = data;
+    
+    if (diretoria) {
+      filtered = filtered.filter(item => {
+        if (!item || !item.Diretoria) return false;
+        
+        // Divide por vírgula e verifica se algum valor contém o filtro
+        const valores = item.Diretoria.split(',');
+        return valores.some(v =>
+          v.trim().toLowerCase().includes(diretoria.toLowerCase())
+        );
+      });
+    }
+    
+    if (assessoria) {
+      filtered = filtered.filter(item => {
+        if (!item || !item['Assessoria | Núcleo | Programas']) return false;
+        
+        const valores = item['Assessoria | Núcleo | Programas'].split(',');
+        return valores.some(v =>
+          v.trim().toLowerCase().includes(assessoria.toLowerCase())
+        );
+      });
+    }
+    
+    return filtered;
   }
 }
 

@@ -78,6 +78,33 @@ class ChartBuilder {
       'Contratação': '#e53935'
     };
 
+    // Agrupa dados por diretoria primeiro
+    const diretoriaMap = new Map();
+    data.forEach(item => {
+      // Pega a diretoria, dividindo por vírgula se necessário
+      const diretorias = (item.Diretoria || 'Sem Diretoria').split(',').map(d => d.trim());
+      const diretoria = diretorias[0] || 'Sem Diretoria'; // Usa a primeira diretoria
+      
+      if (!diretoriaMap.has(diretoria)) {
+        diretoriaMap.set(diretoria, []);
+      }
+      diretoriaMap.get(diretoria).push(item);
+    });
+
+    // Ordena diretorias alfabeticamente
+    const sortedDiretorias = Array.from(diretoriaMap.keys()).sort();
+
+    // Cria um mapeamento de projeto para label com diretoria
+    const projectLabels = new Map();
+    sortedDiretorias.forEach(diretoria => {
+      const items = diretoriaMap.get(diretoria);
+      const projects = [...new Set(items.map(item => item.Project))];
+      
+      projects.forEach(project => {
+        projectLabels.set(project, `[${diretoria}] ${project}`);
+      });
+    });
+
     const phaseMap = new Map();
 
     data.forEach(item => {
@@ -95,7 +122,7 @@ class ChartBuilder {
 
     const traces = [];
 
-    const truncate = (s, max = 28) => {
+    const truncate = (s, max = 50) => {
       const str = String(s ?? '');
       if (str.length <= max) return str;
       return str.slice(0, Math.max(0, max - 1)) + '…';
@@ -103,6 +130,16 @@ class ChartBuilder {
 
     sortedPhases.forEach(phase => {
       const items = phaseMap.get(phase);
+
+      // Ordena items por diretoria
+      items.sort((a, b) => {
+        const dirA = (a.Diretoria || 'Sem Diretoria').split(',')[0].trim();
+        const dirB = (b.Diretoria || 'Sem Diretoria').split(',')[0].trim();
+        if (dirA === dirB) {
+          return (a.Project || '').localeCompare(b.Project || '');
+        }
+        return dirA.localeCompare(dirB);
+      });
 
       // Duração em ms (Plotly usa isso para barras com base)
       const durations = items.map(item => {
@@ -117,7 +154,17 @@ class ChartBuilder {
       const endDates = items.map(item => new Date(item.End).toISOString());
 
       const projectFull = items.map(item => item.Project || 'Projeto');
-      const projectAxis = isMobile ? projectFull.map(p => truncate(p, 28)) : projectFull;
+      
+      // Cria labels com diretoria
+      const projectWithDiretoria = items.map(item => {
+        const project = item.Project || 'Projeto';
+        return projectLabels.get(project) || project;
+      });
+      
+      // Sempre trunca os labels para o eixo Y (mobile ou desktop)
+      const projectAxis = projectWithDiretoria.map(p => 
+        truncate(p, isMobile ? 35 : 50)
+      );
 
       traces.push({
         x: durations,

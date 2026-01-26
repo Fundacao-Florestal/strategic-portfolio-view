@@ -37,6 +37,8 @@ class UIManager {
       return;
     }
 
+    console.log('Criando controles...', this.dataLoader);
+
     // Botão de exportação
     const exportBtn = document.createElement('button');
     exportBtn.id = this.config.exportBtn;
@@ -44,28 +46,71 @@ class UIManager {
     exportBtn.textContent = '📥 Exportar Gráfico';
     exportBtn.addEventListener('click', () => this.handleExport());
 
-    // Filtro de status
-    const filterContainer = document.createElement('div');
-    filterContainer.className = 'filter-group';
+    // Filtro de Diretoria
+    const diretoriaFilterContainer = document.createElement('div');
+    diretoriaFilterContainer.className = 'filter-group';
     
-    const filterLabel = document.createElement('label');
-    filterLabel.textContent = 'Filtrar por Status:';
+    const diretoriaLabel = document.createElement('label');
+    diretoriaLabel.textContent = 'Filtrar por Diretoria:';
     
-    const filterSelect = document.createElement('select');
-    filterSelect.className = 'filter-select';
-    filterSelect.innerHTML = `
-      <option value="">Todos</option>
-      <option value="completed">✓ Completado</option>
-      <option value="in-progress">→ Em Progresso</option>
-      <option value="not-started">○ Não Iniciado</option>
-    `;
-    filterSelect.addEventListener('change', (e) => this.handleFilter(e.target.value));
+    const diretoriaSelect = document.createElement('select');
+    diretoriaSelect.id = 'filter-diretoria';
+    diretoriaSelect.className = 'filter-select';
+    diretoriaSelect.innerHTML = '<option value="">Todas as Diretorias</option>';
+    
+    // Popula opções de diretoria
+    try {
+      const diretorias = this.dataLoader.getDiretorias();
+      console.log('Diretorias carregadas:', diretorias);
+      diretorias.forEach(diretoria => {
+        const option = document.createElement('option');
+        option.value = diretoria;
+        option.textContent = diretoria;
+        diretoriaSelect.appendChild(option);
+      });
+    } catch (e) {
+      console.error('Erro ao carregar diretorias:', e);
+    }
+    
+    diretoriaSelect.addEventListener('change', () => this.applyFilters());
 
-    // filterContainer.appendChild(filterLabel);
-    // filterContainer.appendChild(filterSelect);
+    diretoriaFilterContainer.appendChild(diretoriaLabel);
+    diretoriaFilterContainer.appendChild(diretoriaSelect);
+
+    // Filtro de Assessoria/Núcleo/Programas
+    const assessoriaFilterContainer = document.createElement('div');
+    assessoriaFilterContainer.className = 'filter-group';
+    
+    const assessoriaLabel = document.createElement('label');
+    assessoriaLabel.textContent = 'Filtrar por Assessoria | Núcleo | Programas:';
+    
+    const assessoriaSelect = document.createElement('select');
+    assessoriaSelect.id = 'filter-assessoria';
+    assessoriaSelect.className = 'filter-select';
+    assessoriaSelect.innerHTML = '<option value="">Todas</option>';
+    
+    // Popula opções de assessoria
+    try {
+      const assessorias = this.dataLoader.getAssessoriaOuNucleo();
+      console.log('Assessorias carregadas:', assessorias);
+      assessorias.forEach(assessoria => {
+        const option = document.createElement('option');
+        option.value = assessoria;
+        option.textContent = assessoria;
+        assessoriaSelect.appendChild(option);
+      });
+    } catch (e) {
+      console.error('Erro ao carregar assessorias:', e);
+    }
+    
+    assessoriaSelect.addEventListener('change', () => this.applyFilters());
+
+    assessoriaFilterContainer.appendChild(assessoriaLabel);
+    assessoriaFilterContainer.appendChild(assessoriaSelect);
 
     controlsContainer.appendChild(exportBtn);
-    // controlsContainer.appendChild(filterContainer);
+    controlsContainer.appendChild(diretoriaFilterContainer);
+    controlsContainer.appendChild(assessoriaFilterContainer);
   }
 
   /**
@@ -115,6 +160,56 @@ class UIManager {
   }
 
   /**
+   * Aplica filtros de Diretoria e Assessoria
+   */
+  applyFilters() {
+    console.log('Aplicando filtros...');
+    
+    const diretoriaSelect = document.getElementById('filter-diretoria');
+    const assessoriaSelect = document.getElementById('filter-assessoria');
+    
+    const diretoria = diretoriaSelect?.value || '';
+    const assessoria = assessoriaSelect?.value || '';
+
+    console.log('Filtros selecionados:', { diretoria, assessoria });
+
+    // Se não há filtros, recarrega todos os dados
+    if (!diretoria && !assessoria) {
+      const allData = this.dataLoader.transformForPlotly();
+      this.chartBuilder.updateChart(allData);
+      this.updateStats(); // Atualiza stats com todos os dados
+      this.showNotification('Filtro removido: Mostrando todos os projetos', 'info');
+      return;
+    }
+
+    // Filtra os dados brutos
+    const filteredRawData = this.dataLoader.filterByDiretoriaAndAssessoria(diretoria, assessoria);
+    console.log('Dados brutos filtrados:', filteredRawData.length, 'projetos');
+
+    // Normaliza os dados filtrados usando DataNormalizer
+    const normalizedData = DataNormalizer.normalize(filteredRawData);
+    console.log('Dados normalizados:', normalizedData);
+
+    // Transforma para Plotly
+    const plotlyData = normalizedData.tasks.map(task => ({
+      Task: task.name,
+      Start: new Date(task.start),
+      End: new Date(task.end),
+      Progress: task.progress,
+      Status: task.status,
+      Responsible: task.responsible,
+      Project: task.project,
+      Phase: task.phase
+    }));
+
+    console.log('Dados transformados para Plotly:', plotlyData.length, 'tarefas');
+
+    this.chartBuilder.updateChart(plotlyData);
+    this.updateStats(normalizedData.tasks); // Atualiza stats com dados filtrados
+    
+    const filterText = [diretoria, assessoria].filter(Boolean).join(' + ') || 'Todos';
+    this.showNotification(`Filtro aplicado: ${filterText} (${filteredRawData.length} projetos)`, 'info');
+  }  /**
    * Mostra notificações ao usuário
    */
   showNotification(message, type = 'info') {
@@ -144,9 +239,10 @@ class UIManager {
 
   /**
    * Atualiza estatísticas do projeto
+   * @param {Array} tasksToUse - Opcional: array de tasks filtradas. Se não fornecido, usa todas as tasks.
    */
-  updateStats() {
-    const tasks = this.dataLoader.getTasks();
+  updateStats(tasksToUse = null) {
+    const tasks = tasksToUse || this.dataLoader.getTasks();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     

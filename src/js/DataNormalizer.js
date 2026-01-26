@@ -77,7 +77,9 @@ class DataNormalizer {
         responsible: project['Responsável'] || '',
         impact: project['Impacto'] || 'Normal',
         description: project['Resumo'] || '',
-        sei: project['SEI'] || ''
+        sei: project['SEI'] || '',
+        diretoria: project['Diretoria'] || '',
+        assessoriaOuNucleo: project['Assessoria | Núcleo | Programas'] || ''
       });
     }
 
